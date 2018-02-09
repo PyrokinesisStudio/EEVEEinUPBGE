@@ -868,8 +868,6 @@ RAS_FrameBuffer *KX_KetsjiEngine::PostRenderScene(KX_Scene *scene, RAS_FrameBuff
 {
 	KX_SetActiveScene(scene);
 
-	m_rasterizer->FlushDebugDraw(scene, m_canvas);
-
 	// We need to first make sure our viewport is correct (enabling multiple viewports can mess this up), only for filters.
 	const int width = m_canvas->GetWidth();
 	const int height = m_canvas->GetHeight();
@@ -884,9 +882,6 @@ RAS_FrameBuffer *KX_KetsjiEngine::PostRenderScene(KX_Scene *scene, RAS_FrameBuff
 	 * because the post draw callbacks are per scenes and not per cameras.
 	 */
 	scene->RunDrawingCallbacks(KX_Scene::POST_DRAW, nullptr);
-
-	// Python draw callback can also call debug draw functions, so we have to clear debug shapes.
-	m_rasterizer->FlushDebugDraw(scene, m_canvas);
 #endif
 
 	return frameBuffer;

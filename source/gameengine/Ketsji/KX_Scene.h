@@ -327,6 +327,7 @@ public:
 	void RenderBucketsNew(const KX_CullingNodeList& nodes, RAS_Rasterizer *rasty);
 
 	void RenderFonts(); /* old bge method to draw fonts */
+	void RenderDebugLines();
 
 	/***************End of EEVEE INTEGRATION**********************/
 

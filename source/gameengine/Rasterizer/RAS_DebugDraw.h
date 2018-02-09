@@ -45,7 +45,7 @@ class RAS_DebugDraw
 {
 	friend RAS_OpenGLDebugDraw;
 
-private:
+public:
 	struct Shape
 	{
 		Shape(const MT_Vector4& color);
@@ -144,6 +144,11 @@ public:
 	void RenderText2D(const std::string& text, const MT_Vector2& pos, const MT_Vector4& color);
 
 	void Flush(RAS_Rasterizer *rasty, RAS_ICanvas *canvas);
+
+	/* EEVEE INTEGRATION */
+	/* I want to split debug drawing in several functions for now (Replace Flush) */
+	void ClearDebugLines();
+	/* End of EEVEE INTEGRATION */
 };
 
 #endif  // __RAS_DEBUG_DRAW_H__

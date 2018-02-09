@@ -167,26 +167,6 @@ void RAS_OpenGLDebugDraw::Flush(RAS_Rasterizer *rasty, RAS_ICanvas *canvas, RAS_
 	Gwn_VertFormat *format = immVertexFormat();
 	unsigned int pos = GWN_vertformat_attr_add(format, "pos", GWN_COMP_F32, 3, GWN_FETCH_FLOAT);
 
-	immBindBuiltinProgram(GPU_SHADER_3D_UNIFORM_COLOR);
-
-	for (const RAS_DebugDraw::Line& line : debugDraw->m_lines) {
-		float col[4];
-		line.m_color.getValue(col);
-		immUniformColor4fv(col);
-
-		immBeginAtMost(GWN_PRIM_LINES, 2);
-
-		float frompos[3];
-		line.m_from.getValue(frompos);
-		immVertex3fv(pos, frompos);
-		float topos[3];
-		line.m_to.getValue(topos);
-		immVertex3fv(pos, topos);
-
-		immEnd();
-	}
-	immUnbindProgram();
-
 	// Draw aabbs
 	for (const RAS_DebugDraw::Aabb& aabb : debugDraw->m_aabbs) {
 
