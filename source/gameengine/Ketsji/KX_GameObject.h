@@ -229,7 +229,6 @@ public:
 	void TagForUpdate(); // It was UpdateBuckets before.
 
 	bool m_wasculled; // used for culling (Discard material batches (display arrays)
-	bool m_wasVisible; // also used to discard display arrays, but when we mark the object to be invisible
 
 	void SetIsReplica(bool isReplica); // used for replace mesh. A replica is a copy of the original game object
 

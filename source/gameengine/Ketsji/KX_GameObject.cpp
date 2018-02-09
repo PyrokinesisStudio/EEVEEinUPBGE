@@ -134,7 +134,6 @@ KX_GameObject::KX_GameObject(
       m_pDupliGroupObject(nullptr),
 	  m_wasculled(false), // eevee integration
 	  m_needShadowUpdate(true), // eevee integration
-	  m_wasVisible(true), // eevee integration
 	  m_boundingBox(nullptr), // eevee integration (moved from RAS_MeshUser)
 	  m_isReplica(false), // eevee integration (used for ReplaceMesh)
 	  m_castShadows(true), // eevee integration
@@ -575,7 +574,12 @@ void KX_GameObject::RemoveShadowShadingGroups()
 	DRW_game_pass_free(cascade);
 	KX_Scene *scene = GetScene();
 	for (KX_GameObject *gameobj : scene->GetObjectList()) {
-		if (gameobj != this && gameobj->m_castShadows) {
+		/* Note: This condition could be more restrictive
+		 * (Do another shadow culling test with main camera
+		 * frustum but we have to keep the ability to see the
+		 * shadows of culled objects so the test might be tricky to write)
+		 */
+		if (gameobj != this && gameobj->m_castShadows && gameobj->GetVisible()) {
 			gameobj->AddNewShadowShadingGroupsToPasses();
 		}
 	}
@@ -766,6 +770,12 @@ static void setVisible_recursive(SG_Node* node, bool v)
 
 void KX_GameObject::SetVisible(bool v, bool recursive)
 {
+	if (v && !m_bVisible) {
+		AddNewShadowShadingGroupsToPasses();
+	}
+	else if (!v && m_bVisible) {
+		RemoveShadowShadingGroups();
+	}
 	m_bVisible = v;
 	if (m_pGraphicController)
 		m_pGraphicController->Activate(m_bVisible);

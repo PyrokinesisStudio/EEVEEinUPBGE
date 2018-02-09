@@ -968,13 +968,11 @@ void KX_Scene::RenderBucketsNew(const KX_CullingNodeList& nodes, RAS_Rasterizer 
 		if ((gameobj->GetCulled() || !gameobj->GetVisible())) {
 			gameobj->DiscardMaterialBatches();
 			gameobj->m_wasculled = true; // TODO: replace with functions getter/setter
-			gameobj->m_wasVisible = false; // TODO: replace with functions getter/setter
 		}
 		else {
-			if (gameobj->m_wasculled || !gameobj->m_wasVisible) {
+			if (gameobj->m_wasculled) {
 				gameobj->RestoreMaterialBatches();
 				gameobj->m_wasculled = false; // TODO: replace with functions getter/setter
-				gameobj->m_wasVisible = true; // TODO: replace with functions getter/setter
 			}
 		}
 	}
