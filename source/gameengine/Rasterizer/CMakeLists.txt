@@ -58,17 +58,12 @@ set(INC_SYS
 )
 
 set(SRC
-	RAS_2DFilter.cpp
-	RAS_2DFilterData.cpp
-	RAS_2DFilterManager.cpp
-	RAS_2DFilterFrameBuffer.cpp
 	RAS_BoundingBox.cpp
 	RAS_BoundingBoxManager.cpp
 	RAS_BucketManager.cpp
 	RAS_DebugDraw.cpp
 	RAS_Deformer.cpp
 	RAS_DisplayArrayBucket.cpp
-	RAS_FrameBuffer.cpp
 	RAS_FramingManager.cpp
 	RAS_ICanvas.cpp
 	RAS_IDisplayArray.cpp
@@ -79,13 +74,8 @@ set(SRC
 	RAS_MeshMaterial.cpp
 	RAS_MeshObject.cpp
 	RAS_Polygon.cpp
-	RAS_Shader.cpp
 	RAS_Texture.cpp
- 	
-	RAS_2DFilterData.h
-	RAS_2DFilter.h
-	RAS_2DFilterManager.h
-	RAS_2DFilterFrameBuffer.h
+
 	RAS_BoundingBox.h
 	RAS_BoundingBoxManager.h
 	RAS_BucketManager.h
@@ -94,7 +84,6 @@ set(SRC
 	RAS_Deformer.h
 	RAS_DisplayArray.h
 	RAS_DisplayArrayBucket.h
-	RAS_FrameBuffer.h
 	RAS_FramingManager.h
 	RAS_ICanvas.h
 	RAS_IDisplayArray.h
@@ -107,22 +96,9 @@ set(SRC
 	RAS_MeshObject.h
 	RAS_Polygon.h
 	RAS_Rect.h
-	RAS_Shader.h
 	RAS_Texture.h
 	RAS_Vertex.h
 )
-
-data_to_c_simple(RAS_OpenGLFilters/RAS_Blur2DFilter.glsl SRC)
-data_to_c_simple(RAS_OpenGLFilters/RAS_Dilation2DFilter.glsl SRC)
-data_to_c_simple(RAS_OpenGLFilters/RAS_Erosion2DFilter.glsl SRC)
-data_to_c_simple(RAS_OpenGLFilters/RAS_GrayScale2DFilter.glsl SRC)
-data_to_c_simple(RAS_OpenGLFilters/RAS_Invert2DFilter.glsl SRC)
-data_to_c_simple(RAS_OpenGLFilters/RAS_Laplacian2DFilter.glsl SRC)
-data_to_c_simple(RAS_OpenGLFilters/RAS_Prewitt2DFilter.glsl SRC)
-data_to_c_simple(RAS_OpenGLFilters/RAS_Sepia2DFilter.glsl SRC)
-data_to_c_simple(RAS_OpenGLFilters/RAS_Sharpen2DFilter.glsl SRC)
-data_to_c_simple(RAS_OpenGLFilters/RAS_Sobel2DFilter.glsl SRC)
-data_to_c_simple(RAS_OpenGLFilters/RAS_VertexShader2DFilter.glsl SRC)
 
 add_definitions(${GL_DEFINITIONS})
 

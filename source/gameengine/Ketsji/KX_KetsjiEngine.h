@@ -49,7 +49,6 @@ class KX_ISystem;
 class KX_BlenderConverter;
 class KX_NetworkMessageManager;
 class RAS_ICanvas;
-class RAS_FrameBuffer;
 class SCA_IInputDevice;
 struct EEVEE_ViewLayerData;
 
@@ -128,9 +127,6 @@ private:
 	/// Data used to render a frame.
 	struct FrameRenderData
 	{
-		FrameRenderData(RAS_Rasterizer::FrameBufferType fbType);
-
-		RAS_Rasterizer::FrameBufferType m_fbType;
 		std::vector<SceneRenderData> m_sceneDataList;
 	};
 
@@ -288,8 +284,6 @@ private:
 public:
 	KX_KetsjiEngine(KX_ISystem *system);
 	virtual ~KX_KetsjiEngine();
-
-	RAS_FrameBuffer *PostRenderScene(KX_Scene *scene, RAS_FrameBuffer *inputfb, RAS_FrameBuffer *targetfb);
 
 	/// set the devices and stuff. the client must take care of creating these
 	void SetInputDevice(SCA_IInputDevice *inputDevice);

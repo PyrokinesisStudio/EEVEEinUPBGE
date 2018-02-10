@@ -37,8 +37,6 @@
 
 #include <vector>
 
-class RAS_FrameBuffer;
-
 class RAS_BucketManager
 {
 public:

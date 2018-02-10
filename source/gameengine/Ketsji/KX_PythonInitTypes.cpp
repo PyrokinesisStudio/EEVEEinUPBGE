@@ -34,16 +34,12 @@
 #include "KX_PythonInitTypes.h"
 
 /* Only for Class::Parents */
-#include "BL_Shader.h"
 #include "BL_ActionActuator.h"
 #include "BL_ArmatureActuator.h"
 #include "BL_ArmatureConstraint.h"
 #include "BL_ArmatureObject.h"
 #include "BL_ArmatureChannel.h"
 #include "BL_Texture.h"
-#include "KX_2DFilter.h"
-#include "KX_2DFilterManager.h"
-#include "KX_2DFilterFrameBuffer.h"
 #include "KX_WorldInfo.h"
 #include "KX_ArmatureSensor.h"
 #include "KX_BlenderMaterial.h"
@@ -75,7 +71,6 @@
 #include "KX_TrackToActuator.h"
 #include "KX_VehicleWrapper.h"
 #include "KX_VertexProxy.h"
-#include "SCA_2DFilterActuator.h"
 #include "SCA_ANDController.h"
 #include "SCA_ActuatorSensor.h"
 #include "SCA_AlwaysSensor.h"
@@ -202,7 +197,6 @@ PyMODINIT_FUNC initGameTypesPythonBinding(void)
 
 	for (int init_getset= 1; init_getset > -1; init_getset--) { /* run twice, once to init the getsets another to run PyType_Ready */
 		PyType_Ready_Attr(dict, BL_ActionActuator, init_getset);
-		PyType_Ready_Attr(dict, BL_Shader, init_getset);
 		PyType_Ready_Attr(dict, BL_ArmatureObject, init_getset);
 		PyType_Ready_Attr(dict, BL_ArmatureActuator, init_getset);
 		PyType_Ready_Attr(dict, BL_ArmatureConstraint, init_getset);
@@ -213,9 +207,6 @@ PyMODINIT_FUNC initGameTypesPythonBinding(void)
 		PyType_Ready_Attr(dict, CBaseListValue, init_getset);
 		PyType_Ready_Attr(dict, CListWrapper, init_getset);
 		PyType_Ready_Attr(dict, CValue, init_getset);
-		PyType_Ready_Attr(dict, KX_2DFilter, init_getset);
-		PyType_Ready_Attr(dict, KX_2DFilterManager, init_getset);
-		PyType_Ready_Attr(dict, KX_2DFilterFrameBuffer, init_getset);
 		PyType_Ready_Attr(dict, KX_ArmatureSensor, init_getset);
 		PyType_Ready_Attr(dict, KX_BlenderMaterial, init_getset);
 		PyType_Ready_Attr(dict, KX_BoundingBox, init_getset);
@@ -260,7 +251,6 @@ PyMODINIT_FUNC initGameTypesPythonBinding(void)
 		PyType_Ready_Attr(dict, KX_MouseActuator, init_getset);
 		PyType_Ready_Attr(dict, KX_CollisionContactPoint, init_getset);
 		PyType_Ready_Attr(dict, PyObjectPlus, init_getset);
-		PyType_Ready_Attr(dict, SCA_2DFilterActuator, init_getset);
 		PyType_Ready_Attr(dict, SCA_ANDController, init_getset);
 		// PyType_Ready_Attr(dict, SCA_Actuator, init_getset);  // doesn't use Py_Header
 		PyType_Ready_Attr(dict, SCA_ActuatorSensor, init_getset);

@@ -17,7 +17,6 @@
 class SCA_IScene;
 class KX_Scene;
 class RAS_Rasterizer;
-class BL_Shader;
 struct Material;
 struct GPUMaterial;
 
@@ -34,12 +33,11 @@ private:
 	GPUMaterial * m_gpuMat;
 
 	Material *m_material;
-	BL_Shader *m_customShader;
 	RAS_Rasterizer *m_rasterizer;
 	KX_Scene *m_scene;
 	bool m_userDefBlend;
 	unsigned int m_blendFunc[2];
-	bool m_constructed; // if false, don't clean on exit
+	bool m_constructed;
 	int m_lightLayer;
 
 	struct {
@@ -65,10 +63,7 @@ public:
 	virtual ~KX_BlenderMaterial();
 
 	void InitTextures();
-	// cleanup stuff
-	void OnExit();
 
-	BL_Shader *GetCustomShader() const ;
 	virtual const std::string GetTextureName() const;
 	virtual Material *GetBlenderMaterial() const;
 	virtual void GetRGBAColor(unsigned char *rgba) const;
@@ -93,12 +88,8 @@ public:
 	virtual std::string GetName();
 
 #ifdef WITH_PYTHON
-
-	static PyObject *pyattr_get_shader(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef);
-	static PyObject *pyattr_get_materialIndex(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef);
 	static PyObject *pyattr_get_blending(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef);
 	static PyObject *pyattr_get_textures(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef);
-	static int pyattr_set_blending(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef, PyObject *value);
 	static PyObject *pyattr_get_alpha(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef);
 	static int pyattr_set_alpha(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef, PyObject *value);
 	static PyObject *pyattr_get_hardness(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef);
@@ -113,15 +104,8 @@ public:
 	static int pyattr_set_diffuse_color(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef, PyObject *value);
 	static PyObject *pyattr_get_emit(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef);
 	static int pyattr_set_emit(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef, PyObject *value);
-	static PyObject *pyattr_get_ambient(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef);
-	static int pyattr_set_ambient(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef, PyObject *value);
 	static PyObject *pyattr_get_specular_alpha(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef);
 	static int pyattr_set_specular_alpha(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef, PyObject *value);
-
-	KX_PYMETHOD_DOC(KX_BlenderMaterial, getShader);
-	KX_PYMETHOD_DOC(KX_BlenderMaterial, getTextureBindcode);
-
-	KX_PYMETHOD_DOC(KX_BlenderMaterial, setBlending);
 
 #endif  // WITH_PYTHON
 };

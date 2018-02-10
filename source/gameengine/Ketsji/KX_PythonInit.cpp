@@ -93,7 +93,6 @@ extern "C" {
 #include "SCA_PythonJoystick.h"
 #include "SCA_PythonKeyboard.h"
 #include "SCA_PythonMouse.h"
-#include "SCA_2DFilterActuator.h"
 #include "KX_ConstraintActuator.h"
 #include "KX_SoundActuator.h"
 #include "KX_StateActuator.h"
@@ -102,7 +101,6 @@ extern "C" {
 #include "RAS_Rasterizer.h"
 #include "RAS_ICanvas.h"
 #include "RAS_BucketManager.h"
-#include "RAS_2DFilterManager.h"
 #include "MT_Vector3.h"
 #include "MT_Vector4.h"
 #include "EXP_ListValue.h"
@@ -112,7 +110,6 @@ extern "C" {
 
 #include "KX_NetworkMessageScene.h" //Needed for sendMessage()
 
-#include "BL_Shader.h"
 #include "BL_Action.h"
 
 #include "KX_PyMath.h"
@@ -1358,24 +1355,6 @@ PyMODINIT_FUNC initGameLogicPythonBinding()
 	KX_MACRO_addTypesToDict(d, BL_ONE_MINUS_DST_ALPHA, RAS_Rasterizer::RAS_ONE_MINUS_DST_ALPHA);
 	KX_MACRO_addTypesToDict(d, BL_SRC_ALPHA_SATURATE, RAS_Rasterizer::RAS_SRC_ALPHA_SATURATE);
 
-
-	/* 8. UniformTypes */
-	KX_MACRO_addTypesToDict(d, SHD_TANGENT, BL_Shader::SHD_TANGENT);
-	KX_MACRO_addTypesToDict(d, MODELVIEWMATRIX, RAS_Shader::MODELVIEWMATRIX);
-	KX_MACRO_addTypesToDict(d, MODELVIEWMATRIX_TRANSPOSE, RAS_Shader::MODELVIEWMATRIX_TRANSPOSE);
-	KX_MACRO_addTypesToDict(d, MODELVIEWMATRIX_INVERSE, RAS_Shader::MODELVIEWMATRIX_INVERSE);
-	KX_MACRO_addTypesToDict(d, MODELVIEWMATRIX_INVERSETRANSPOSE, RAS_Shader::MODELVIEWMATRIX_INVERSETRANSPOSE);
-	KX_MACRO_addTypesToDict(d, MODELMATRIX, RAS_Shader::MODELMATRIX);
-	KX_MACRO_addTypesToDict(d, MODELMATRIX_TRANSPOSE, RAS_Shader::MODELMATRIX_TRANSPOSE);
-	KX_MACRO_addTypesToDict(d, MODELMATRIX_INVERSE, RAS_Shader::MODELMATRIX_INVERSE);
-	KX_MACRO_addTypesToDict(d, MODELMATRIX_INVERSETRANSPOSE, RAS_Shader::MODELMATRIX_INVERSETRANSPOSE);
-	KX_MACRO_addTypesToDict(d, VIEWMATRIX, RAS_Shader::VIEWMATRIX);
-	KX_MACRO_addTypesToDict(d, VIEWMATRIX_TRANSPOSE, RAS_Shader::VIEWMATRIX_TRANSPOSE);
-	KX_MACRO_addTypesToDict(d, VIEWMATRIX_INVERSE, RAS_Shader::VIEWMATRIX_INVERSE);
-	KX_MACRO_addTypesToDict(d, VIEWMATRIX_INVERSETRANSPOSE, RAS_Shader::VIEWMATRIX_INVERSETRANSPOSE);
-	KX_MACRO_addTypesToDict(d, CAM_POS, RAS_Shader::CAM_POS);
-	KX_MACRO_addTypesToDict(d, CONSTANT_TIMER, RAS_Shader::CONSTANT_TIMER);
-
 	/* 9. state actuator */
 	KX_MACRO_addTypesToDict(d, KX_STATE1, (1<<0));
 	KX_MACRO_addTypesToDict(d, KX_STATE2, (1<<1));
@@ -1457,23 +1436,6 @@ PyMODINIT_FUNC initGameLogicPythonBinding()
 	KX_MACRO_addTypesToDict(d, KX_MOUSE_BUT_LEFT, SCA_IInputDevice::LEFTMOUSE);
 	KX_MACRO_addTypesToDict(d, KX_MOUSE_BUT_MIDDLE, SCA_IInputDevice::MIDDLEMOUSE);
 	KX_MACRO_addTypesToDict(d, KX_MOUSE_BUT_RIGHT, SCA_IInputDevice::RIGHTMOUSE);
-
-	/* 2D Filter Actuator */
-	KX_MACRO_addTypesToDict(d, RAS_2DFILTER_ENABLED, RAS_2DFilterManager::FILTER_ENABLED);
-	KX_MACRO_addTypesToDict(d, RAS_2DFILTER_DISABLED, RAS_2DFilterManager::FILTER_DISABLED);
-	KX_MACRO_addTypesToDict(d, RAS_2DFILTER_NOFILTER, RAS_2DFilterManager::FILTER_NOFILTER);
-	KX_MACRO_addTypesToDict(d, RAS_2DFILTER_MOTIONBLUR, RAS_2DFilterManager::FILTER_MOTIONBLUR);
-	KX_MACRO_addTypesToDict(d, RAS_2DFILTER_BLUR, RAS_2DFilterManager::FILTER_BLUR);
-	KX_MACRO_addTypesToDict(d, RAS_2DFILTER_SHARPEN, RAS_2DFilterManager::FILTER_SHARPEN);
-	KX_MACRO_addTypesToDict(d, RAS_2DFILTER_DILATION, RAS_2DFilterManager::FILTER_DILATION);
-	KX_MACRO_addTypesToDict(d, RAS_2DFILTER_EROSION, RAS_2DFilterManager::FILTER_EROSION);
-	KX_MACRO_addTypesToDict(d, RAS_2DFILTER_LAPLACIAN, RAS_2DFilterManager::FILTER_LAPLACIAN);
-	KX_MACRO_addTypesToDict(d, RAS_2DFILTER_SOBEL, RAS_2DFilterManager::FILTER_SOBEL);
-	KX_MACRO_addTypesToDict(d, RAS_2DFILTER_PREWITT, RAS_2DFilterManager::FILTER_PREWITT);
-	KX_MACRO_addTypesToDict(d, RAS_2DFILTER_GRAYSCALE, RAS_2DFilterManager::FILTER_GRAYSCALE);
-	KX_MACRO_addTypesToDict(d, RAS_2DFILTER_SEPIA, RAS_2DFilterManager::FILTER_SEPIA);
-	KX_MACRO_addTypesToDict(d, RAS_2DFILTER_INVERT, RAS_2DFilterManager::FILTER_INVERT);
-	KX_MACRO_addTypesToDict(d, RAS_2DFILTER_CUSTOMFILTER, RAS_2DFilterManager::FILTER_CUSTOMFILTER);
 
 	/* Sound Actuator */
 	KX_MACRO_addTypesToDict(d, KX_SOUNDACT_PLAYSTOP, KX_SoundActuator::KX_SOUNDACT_PLAYSTOP);

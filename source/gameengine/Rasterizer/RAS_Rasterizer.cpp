@@ -34,7 +34,6 @@
 #include "RAS_IPolygonMaterial.h"
 #include "RAS_DisplayArrayBucket.h"
 
-#include "RAS_FrameBuffer.h"
 #include "RAS_ICanvas.h"
 #include "RAS_Rect.h"
 #include "RAS_Polygon.h"
@@ -65,118 +64,10 @@ extern "C" {
 
 #include "MEM_guardedalloc.h"
 
-// XXX Clean these up <<<
 #include "KX_RayCast.h"
 #include "KX_GameObject.h"
-// >>>
 
 #include "CM_Message.h"
-
-RAS_Rasterizer::FrameBuffers::FrameBuffers()
-	:m_width(0),
-	m_height(0),
-	m_samples(0),
-	m_hdr(RAS_HDR_NONE)
-{
-	for (int i = 0; i < RAS_FRAMEBUFFER_MAX; i++) {
-		m_frameBuffers[i] = nullptr;
-	}
-}
-
-RAS_Rasterizer::FrameBuffers::~FrameBuffers()
-{
-	/* Free FrameBuffer Textures Attachments */
-	for (int i = 0; i < RAS_FRAMEBUFFER_MAX; i++) {
-		if (m_frameBuffers[i]) {
-			delete m_frameBuffers[i];
-		}
-	}
-}
-
-inline void RAS_Rasterizer::FrameBuffers::Update(RAS_ICanvas *canvas)
-{
-	const unsigned int width = canvas->GetWidth() + 1;
-	const unsigned int height = canvas->GetHeight() + 1;
-
-	if (width == m_width && height == m_height) {
-		// No resize detected.
-		return;
-	}
-
-	m_width = width;
-	m_height = height;
-	m_samples = canvas->GetSamples();
-	m_hdr = canvas->GetHdrType();
-
-	// Destruct all off screens.
-	for (unsigned short i = 0; i < RAS_FRAMEBUFFER_MAX; ++i) {
-		m_frameBuffers[i] = nullptr;
-	}
-}
-
-inline RAS_FrameBuffer *RAS_Rasterizer::FrameBuffers::GetFrameBuffer(FrameBufferType fbtype)
-{
-	if (!m_frameBuffers[fbtype]) {
-		// The offscreen need to be created now.
-
-		// Check if the off screen type can support samples.
-		const bool sampleofs = false;
-
-		/* Some GPUs doesn't support high multisample value with GL_RGBA16F or GL_RGBA32F.
-		 * To avoid crashing we check if the off screen was created and if not decremente
-		 * the multisample value and try to create the off screen to find a supported value.
-		 */
-		for (int samples = m_samples; samples >= 0; --samples) {
-
-			RAS_FrameBuffer *fb = new RAS_FrameBuffer(m_width, m_height, m_hdr, fbtype);
-			
-			if (!fb->GetFrameBuffer()) {
-				delete fb;
-				continue;
-			}
-			m_frameBuffers[fbtype] = fb;
-			m_samples = samples;
-			break;
-		}
-	}
-	return m_frameBuffers[fbtype];
-}
-
-RAS_Rasterizer::FrameBufferType RAS_Rasterizer::NextFilterFrameBuffer(FrameBufferType type)
-{
-	switch (type) {
-		case RAS_FRAMEBUFFER_FILTER0:
-		{
-			return RAS_FRAMEBUFFER_FILTER1;
-		}
-		case RAS_FRAMEBUFFER_FILTER1:
-		// Passing a non-filter frame buffer is allowed.
-		default:
-		{
-			return RAS_FRAMEBUFFER_FILTER0;
-		}
-	}
-}
-
-RAS_Rasterizer::FrameBufferType RAS_Rasterizer::NextRenderFrameBuffer(FrameBufferType type)
-{
-	switch (type) {
-		case RAS_FRAMEBUFFER_EYE_LEFT0:
-		{
-			return RAS_FRAMEBUFFER_EYE_LEFT1;
-		}
-		case RAS_FRAMEBUFFER_EYE_LEFT1:
-		{
-			return RAS_FRAMEBUFFER_EYE_LEFT0;
-		}
-		// Passing a non-eye frame buffer is disallowed.
-		default:
-		{
-			BLI_assert(false);
-			return RAS_FRAMEBUFFER_EYE_LEFT0;
-		}
-	}
-}
 
 RAS_Rasterizer::RAS_Rasterizer()
 	:m_time(0.0f),
@@ -315,41 +206,6 @@ RAS_DebugDraw& RAS_Rasterizer::GetDebugDraw(SCA_IScene *scene)
 void RAS_Rasterizer::FlushDebugDraw(SCA_IScene *scene, RAS_ICanvas *canvas)
 {
 	m_debugDraws[scene].Flush(this, canvas);
-}
-
-void RAS_Rasterizer::UpdateFrameBuffers(RAS_ICanvas *canvas)
-{
-	m_frameBuffers.Update(canvas);
-}
-
-RAS_FrameBuffer *RAS_Rasterizer::GetFrameBuffer(FrameBufferType type)
-{
-	return m_frameBuffers.GetFrameBuffer(type);
-}
-
-void RAS_Rasterizer::DrawFrameBuffer(RAS_FrameBuffer *srcFrameBuffer, RAS_FrameBuffer *dstFrameBuffer)
-{
-	GPUTexture *src = GPU_framebuffer_color_texture(srcFrameBuffer->GetFrameBuffer());
-	GPU_texture_bind(src, 0);
-
-	GPUShader *shader = GPU_shader_get_builtin_shader(GPU_SHADER_DRAW_FRAME_BUFFER);
-	GPU_shader_bind(shader);
-
-	DrawOverlayPlane();
-
-	GPU_shader_unbind();
-
-	GPU_texture_unbind(src);
-}
-
-void RAS_Rasterizer::DrawFrameBuffer(RAS_ICanvas *canvas, RAS_FrameBuffer *frameBuffer)
-{
-	const RAS_Rect& viewport = canvas->GetViewportArea();
-	SetViewport(viewport.GetLeft(), viewport.GetBottom(), viewport.GetWidth() + 1, viewport.GetHeight() + 1);
-	SetScissor(viewport.GetLeft(), viewport.GetBottom(), viewport.GetWidth() + 1, viewport.GetHeight() + 1);
-
-	GPU_framebuffer_restore();
-	DrawFrameBuffer(frameBuffer, nullptr);
 }
 
 RAS_Rect RAS_Rasterizer::GetRenderArea(RAS_ICanvas *canvas)

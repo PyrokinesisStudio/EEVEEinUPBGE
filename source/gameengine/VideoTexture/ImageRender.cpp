@@ -42,7 +42,6 @@
 
 #include "KX_Globals.h"
 #include "DNA_scene_types.h"
-#include "RAS_FrameBuffer.h"
 #include "RAS_CameraData.h"
 #include "RAS_MeshObject.h"
 #include "RAS_Polygon.h"

@@ -48,7 +48,6 @@
 #include <memory>
 
 class RAS_OpenGLRasterizer;
-class RAS_FrameBuffer;
 class RAS_ICanvas;
 class RAS_IDisplayArray;
 class SCA_IScene;
@@ -65,17 +64,6 @@ struct DRWShadingGroup;
 class RAS_Rasterizer
 {
 public:
-
-	enum FrameBufferType {
-		RAS_FRAMEBUFFER_FILTER0 = 0,
-		RAS_FRAMEBUFFER_FILTER1,
-		RAS_FRAMEBUFFER_EYE_LEFT0,
-		RAS_FRAMEBUFFER_EYE_LEFT1,
-		RAS_FRAMEBUFFER_BLIT_DEPTH,
-		RAS_FRAMEBUFFER_MAX,
-
-		RAS_FRAMEBUFFER_CUSTOM,
-	};
 
 	/**
 	 * Valid SetDepthMask parameters
@@ -156,43 +144,7 @@ public:
 		RAS_HDR_MAX
 	};
 
-	/** Return the output frame buffer normally used for the input frame buffer
-	 * index in case of filters render.
-	 * \param index The input frame buffer, can be a non-filter frame buffer.
-	 * \return The output filter frame buffer.
-	 */
-	static RAS_Rasterizer::FrameBufferType NextFilterFrameBuffer(FrameBufferType index);
-
-	/** Return the output frame buffer normally used for the input frame buffer
-	 * index in case of simple render.
-	 * \param index The input render frame buffer, can be a eye frame buffer.
-	 * \return The output render frame buffer.
-	 */
-	static RAS_Rasterizer::FrameBufferType NextRenderFrameBuffer(FrameBufferType index);
-
 private:
-
-	class FrameBuffers
-	{
-	private:
-
-		RAS_FrameBuffer *m_frameBuffers[RAS_FRAMEBUFFER_MAX];
-
-		/* We need to free all textures at ge exit so we do member variables */
-		GPUTexture *m_colorTextureList[RAS_FRAMEBUFFER_MAX];
-		GPUTexture *m_depthTextureList[RAS_FRAMEBUFFER_MAX];
-		unsigned int m_width;
-		unsigned int m_height;
-		int m_samples;
-		HdrType m_hdr;
-
-	public:
-		FrameBuffers();
-		~FrameBuffers();
-
-		void Update(RAS_ICanvas *canvas);
-		RAS_FrameBuffer *GetFrameBuffer(FrameBufferType type);
-	};
 
 	// All info used to compute the ray cast transform matrix.
 	struct RayCastTranform
@@ -235,9 +187,6 @@ private:
 	int m_lastlightlayer;
 	bool m_lastlighting;
 	void *m_lastauxinfo;
-
-	/// Class used to manage off screens used by the rasterizer.
-	FrameBuffers m_frameBuffers;
 
 	bool m_invertFrontFace;
 	bool m_last_frontface;
@@ -329,27 +278,6 @@ public:
 	 * Draw screen overlay plane with basic uv coordinates.
 	 */
 	void DrawOverlayPlane();
-
-	/// Update dimensions of all off screens.
-	void UpdateFrameBuffers(RAS_ICanvas *canvas);
-
-	/** Return the corresponding off screen to off screen type.
-	 * \param type The off screen type to return.
-	 */
-	RAS_FrameBuffer *GetFrameBuffer(FrameBufferType type);
-
-	/** Draw off screen without set viewport.
-	 * Used to copy the frame buffer object to another.
-	 * \param srcindex The input off screen index.
-	 * \param dstindex The output off screen index.
-	 */
-	void DrawFrameBuffer(RAS_FrameBuffer *srcfb, RAS_FrameBuffer *dstfb);
-
-	/** Draw off screen at the given index to screen.
-	 * \param canvas The canvas containing the screen viewport.
-	 * \param index The off screen index to read from.
-	 */
-	void DrawFrameBuffer(RAS_ICanvas *canvas, RAS_FrameBuffer *frameBuffer);
  
 	/// Get the modelview matrix.
 	MT_Matrix4x4 GetViewMatrix(const MT_Transform &camtrans, bool perspective);

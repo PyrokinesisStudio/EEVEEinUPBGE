@@ -45,7 +45,6 @@
 #include "EXP_ListValue.h"
 #include "SCA_LogicManager.h"
 #include "SCA_TimeEventManager.h"
-#include "SCA_2DFilterActuator.h"
 #include "SCA_PythonController.h"
 #include "KX_CollisionEventManager.h"
 #include "SCA_KeyboardManager.h"
@@ -62,9 +61,6 @@
 
 #include "RAS_Rasterizer.h"
 #include "RAS_ICanvas.h"
-#include "RAS_2DFilterData.h"
-#include "RAS_2DFilter.h"
-#include "KX_2DFilterManager.h"
 #include "RAS_BoundingBoxManager.h"
 #include "RAS_BucketManager.h"
 #include "RAS_ILightObject.h"
@@ -195,7 +191,6 @@ KX_Scene::KX_Scene(SCA_IInputDevice *inputDevice,
 	m_cameralist = new CListValue<KX_Camera>();
 	m_fontlist = new CListValue<KX_FontObject>();
 
-	m_filterManager = new KX_2DFilterManager();
 	m_logicmgr = new SCA_LogicManager();
 	
 	m_timemgr = new SCA_TimeEventManager(m_logicmgr);
@@ -297,10 +292,6 @@ KX_Scene::~KX_Scene()
 
 	if (m_fontlist) {
 		m_fontlist->Release();
-	}
-
-	if (m_filterManager) {
-		delete m_filterManager;
 	}
 
 	if (m_logicmgr)
@@ -2506,11 +2497,6 @@ static void MergeScene_LogicBrick(SCA_ILogicBrick* brick, KX_Scene *from, KX_Sce
 	if (sensor) {
 		sensor->Replace_EventManager(logicmgr);
 	}
-
-	SCA_2DFilterActuator *filter_actuator = dynamic_cast<class SCA_2DFilterActuator*>(brick);
-	if (filter_actuator) {
-		filter_actuator->SetScene(to, to->Get2DFilterManager());
-	}
 }
 
 static void MergeScene_GameObject(KX_GameObject* gameobj, KX_Scene *to, KX_Scene *from)
@@ -2691,16 +2677,6 @@ bool KX_Scene::MergeScene(KX_Scene *other)
 		
 	}
 	return true;
-}
-
-RAS_2DFilterManager *KX_Scene::Get2DFilterManager() const
-{
-	return m_filterManager;
-}
-
-RAS_FrameBuffer *KX_Scene::Render2DFilters(RAS_Rasterizer *rasty, RAS_ICanvas *canvas, RAS_FrameBuffer *inputfb, RAS_FrameBuffer *targetfb)
-{
-	return m_filterManager->RenderFilters(rasty, canvas, inputfb, targetfb, this);
 }
 
 #ifdef WITH_PYTHON
@@ -2904,14 +2880,6 @@ PyObject *KX_Scene::pyattr_get_lights(PyObjectPlus *self_v, const KX_PYATTRIBUTE
 	return self->GetLightList()->GetProxy();
 }
 
-PyObject *KX_Scene::pyattr_get_filter_manager(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef)
-{
-	KX_Scene *self = static_cast<KX_Scene*>(self_v);
-	KX_2DFilterManager *filterManager = (KX_2DFilterManager *)self->Get2DFilterManager();
-
-	return filterManager->GetProxy();
-}
-
 PyObject *KX_Scene::pyattr_get_world(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef)
 {
 	KX_Scene* self = static_cast<KX_Scene*>(self_v);
@@ -3044,7 +3012,6 @@ PyAttributeDef KX_Scene::Attributes[] = {
 	KX_PYATTRIBUTE_RO_FUNCTION("lights",			KX_Scene, pyattr_get_lights),
 	KX_PYATTRIBUTE_RO_FUNCTION("texts",				KX_Scene, pyattr_get_texts),
 	KX_PYATTRIBUTE_RO_FUNCTION("cameras",			KX_Scene, pyattr_get_cameras),
-	KX_PYATTRIBUTE_RO_FUNCTION("filterManager",		KX_Scene, pyattr_get_filter_manager),
 	KX_PYATTRIBUTE_RO_FUNCTION("world",				KX_Scene, pyattr_get_world),
 	KX_PYATTRIBUTE_RW_FUNCTION("active_camera",		KX_Scene, pyattr_get_active_camera, pyattr_set_active_camera),
 	KX_PYATTRIBUTE_RW_FUNCTION("overrideCullingCamera",KX_Scene, pyattr_get_overrideCullingCamera, pyattr_set_overrideCullingCamera),

@@ -50,7 +50,6 @@
 #include "RAS_BucketManager.h"
 #include "RAS_Rasterizer.h"
 #include "RAS_ICanvas.h"
-#include "RAS_FrameBuffer.h"
 #include "MT_Vector3.h"
 #include "MT_Transform.h"
 #include "SCA_IInputDevice.h"
@@ -114,11 +113,6 @@ KX_KetsjiEngine::CameraRenderData::~CameraRenderData()
 
 KX_KetsjiEngine::SceneRenderData::SceneRenderData(KX_Scene *scene)
 	:m_scene(scene)
-{
-}
-
-KX_KetsjiEngine::FrameRenderData::FrameRenderData(RAS_Rasterizer::FrameBufferType fbType)
-	:m_fbType(fbType)
 {
 }
 
@@ -483,9 +477,6 @@ KX_KetsjiEngine::CameraRenderData KX_KetsjiEngine::GetCameraRenderData(KX_Scene 
 	KX_Camera *cullingcam = (overrideCullingCam) ? overrideCullingCam : rendercam;
 
 	KX_SetActiveScene(scene);
-#ifdef WITH_PYTHON
-	scene->RunDrawingCallbacks(KX_Scene::PRE_DRAW_SETUP, rendercam);
-#endif
 
 	RAS_Rect area;
 	RAS_Rect viewport;
@@ -504,13 +495,10 @@ KX_KetsjiEngine::CameraRenderData KX_KetsjiEngine::GetCameraRenderData(KX_Scene 
 
 bool KX_KetsjiEngine::GetFrameRenderData(std::vector<FrameRenderData>& frameDataList)
 {
-	// The off screen corresponding to the frame.
-	static const RAS_Rasterizer::FrameBufferType fbType = RAS_Rasterizer::RAS_FRAMEBUFFER_EYE_LEFT0;
-
 	// Pre-compute the display area used for normal rendering.
 	RAS_Rect displayArea = m_rasterizer->GetRenderArea(m_canvas);
 
-	frameDataList.emplace_back(fbType);
+	frameDataList.emplace_back();
 	FrameRenderData& frameData = frameDataList.back();
 
 	for (KX_Scene *scene : m_scenes) {
@@ -545,10 +533,7 @@ void KX_KetsjiEngine::Render()
 	// clear the entire game screen with the border color
 	m_rasterizer->SetViewport(0, 0, width + 1, height + 1);
 
-	m_rasterizer->UpdateFrameBuffers(m_canvas);
 	EEVEE_Data *vedata = EEVEE_engine_data_get();
-	DefaultTextureList *dtxl = DRW_viewport_texture_list_get();
-	RAS_FrameBuffer *lastfb;
 
 	KX_Scene *firstscene = m_scenes->GetFront();
 	const RAS_FrameSettings &framesettings = firstscene->GetFramingType();
@@ -575,18 +560,6 @@ void KX_KetsjiEngine::Render()
 				// do the rendering
 				RenderCamera(scene, cameraFrameData, pass++);
 			}
-
-			RAS_FrameBuffer *fb = m_rasterizer->GetFrameBuffer(frameData.m_fbType);
-
-			DRW_framebuffer_texture_attach(fb->GetFrameBuffer(), vedata->stl->effects->final_tx, 0, 0);
-			DRW_framebuffer_texture_attach(fb->GetFrameBuffer(), vedata->txl->maxzbuffer, 1, 0);
-
-			RAS_Rasterizer::FrameBufferType next = m_rasterizer->NextRenderFrameBuffer(fb->GetType());
-
-			fb = PostRenderScene(scene, fb, m_rasterizer->GetFrameBuffer(next));
-			lastfb = fb;
-
-			frameData.m_fbType = fb->GetType();
 		}
 	}
 
@@ -594,14 +567,9 @@ void KX_KetsjiEngine::Render()
 	m_rasterizer->SetViewport(viewport.GetLeft(), viewport.GetBottom(), viewport.GetWidth() + 1, viewport.GetHeight() + 1);
 	m_rasterizer->SetScissor(viewport.GetLeft(), viewport.GetBottom(), viewport.GetWidth() + 1, viewport.GetHeight() + 1);
 
-	GPUTexture *lasttex = GPU_framebuffer_color_texture(lastfb->GetFrameBuffer());
-
-	DRW_framebuffer_texture_detach(vedata->stl->effects->source_buffer);
-	DRW_framebuffer_texture_detach(vedata->txl->maxzbuffer);
-
 	GPU_framebuffer_restore();
 
-	DRW_transform_to_display(lasttex);
+	DRW_transform_to_display(vedata->stl->effects->final_tx);
 
 	EndFrame();
 }
@@ -832,7 +800,6 @@ void KX_KetsjiEngine::RenderCamera(KX_Scene *scene, const CameraRenderData& came
 	m_rasterizer->SetMatrix(rendercam->GetModelviewMatrix(), rendercam->GetProjectionMatrix(),
 							rendercam->NodeGetWorldPosition(), rendercam->NodeGetLocalScaling());
 
-	/* TEMP -> needs to be optimised */
 	rendercam->UpdateViewVecs();
 
 	m_logger.StartLog(tc_scenegraph, m_kxsystem->GetTimeInSeconds());
@@ -851,40 +818,12 @@ void KX_KetsjiEngine::RenderCamera(KX_Scene *scene, const CameraRenderData& came
 
 #ifdef WITH_PYTHON
 	PHY_SetActiveEnvironment(scene->GetPhysicsEnvironment());
-	// Run any pre-drawing python callbacks
-	scene->RunDrawingCallbacks(KX_Scene::PRE_DRAW, rendercam);
 #endif
 
 	scene->RenderBucketsNew(nodes, m_rasterizer);
 
 	if (scene->GetPhysicsEnvironment())
 		scene->GetPhysicsEnvironment()->DebugDrawWorld();
-}
-
-/*
- * To run once per scene
- */
-RAS_FrameBuffer *KX_KetsjiEngine::PostRenderScene(KX_Scene *scene, RAS_FrameBuffer *inputfb, RAS_FrameBuffer *targetfb)
-{
-	KX_SetActiveScene(scene);
-
-	// We need to first make sure our viewport is correct (enabling multiple viewports can mess this up), only for filters.
-	const int width = m_canvas->GetWidth();
-	const int height = m_canvas->GetHeight();
-	m_rasterizer->SetViewport(0, 0, width + 1, height + 1);
-	m_rasterizer->SetScissor(0, 0, width + 1, height + 1);
-
-	RAS_FrameBuffer *frameBuffer = scene->Render2DFilters(m_rasterizer, m_canvas, inputfb, targetfb);
-
-#ifdef WITH_PYTHON
-	PHY_SetActiveEnvironment(scene->GetPhysicsEnvironment());
-	/* We can't deduce what camera should be passed to the python callbacks
-	 * because the post draw callbacks are per scenes and not per cameras.
-	 */
-	scene->RunDrawingCallbacks(KX_Scene::POST_DRAW, nullptr);
-#endif
-
-	return frameBuffer;
 }
 
 void KX_KetsjiEngine::StopEngine()

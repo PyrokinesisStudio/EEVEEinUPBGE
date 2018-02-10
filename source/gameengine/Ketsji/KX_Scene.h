@@ -84,10 +84,6 @@ class RAS_MaterialBucket;
 class RAS_IPolyMaterial;
 class RAS_Rasterizer;
 class RAS_DebugDraw;
-class RAS_FrameBuffer;
-class RAS_2DFilter;
-class RAS_2DFilterManager;
-class KX_2DFilterManager;
 class SCA_JoystickManager;
 class btCollisionShape;
 class KX_BlenderSceneConverter;
@@ -280,8 +276,6 @@ protected:
 	static void PhysicsCullingCallback(KX_ClientObjectInfo *objectInfo, void *cullingInfo);
 
 	struct Scene *m_blenderScene;
-
-	KX_2DFilterManager *m_filterManager;
 
 	KX_ObstacleSimulation* m_obstacleSimulation;
 
@@ -496,10 +490,6 @@ public:
 
 	short GetAnimationFPS();
 
-	/* 2D Filters */
-	RAS_2DFilterManager *Get2DFilterManager() const;
-	RAS_FrameBuffer *Render2DFilters(RAS_Rasterizer *rasty, RAS_ICanvas *canvas, RAS_FrameBuffer *inputfb, RAS_FrameBuffer *targetfb);
-
 	KX_ObstacleSimulation* GetObstacleSimulation() { return m_obstacleSimulation; }
 
 	/* Inherited from CValue -- returns the name of this object */
@@ -546,7 +536,6 @@ public:
 	static PyObject*	pyattr_get_lights(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef);
 	static PyObject*	pyattr_get_texts(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef);
 	static PyObject*	pyattr_get_cameras(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef);
-	static PyObject*	pyattr_get_filter_manager(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef);
 	static PyObject*	pyattr_get_world(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef);
 	static PyObject*	pyattr_get_active_camera(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef);
 	static int			pyattr_set_active_camera(PyObjectPlus *self_v, const KX_PYATTRIBUTE_DEF *attrdef, PyObject *value);
