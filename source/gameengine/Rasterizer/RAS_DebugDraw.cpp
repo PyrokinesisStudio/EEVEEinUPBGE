@@ -29,6 +29,14 @@
 
 #include "MT_Frustum.h"
 
+/* EEVEE INTEGRATION */
+extern "C" {
+#  include "BLI_math.h"
+#  include "DRW_render.h"
+#  include "GPU_immediate.h"
+}
+/* End of EEVEE INTEGRATION */
+
 RAS_DebugDraw::RAS_DebugDraw()
 {
 	m_impl = new RAS_OpenGLDebugDraw();
@@ -158,9 +166,38 @@ void RAS_DebugDraw::Flush(RAS_Rasterizer *rasty, RAS_ICanvas *canvas)
 	m_boxes2D.clear();
 }
 
-/* EEVEE INTEGRATION. I want to reorganize this later */
-void RAS_DebugDraw::ClearDebugLines()
+/* EEVEE INTEGRATION. I want to reorganize this. Maybe only keep RAS_DebugDraw and remove RAS_OpenGLDebugDraw... */
+void RAS_DebugDraw::DrawDebugLines()
 {
+	float persmat[4][4];
+	DRW_viewport_matrix_get(persmat, DRW_MAT_PERS);
+
+	// draw lines
+	Gwn_VertFormat *format = immVertexFormat();
+	unsigned int pos = GWN_vertformat_attr_add(format, "pos", GWN_COMP_F32, 3, GWN_FETCH_FLOAT);
+
+	immBindBuiltinProgram(GPU_SHADER_3D_UNIFORM_COLOR);
+
+	for (const RAS_DebugDraw::Line& line : m_lines) {
+		float col[4];
+		line.m_color.getValue(col);
+		immUniformColor4fv(col);
+
+		immBeginAtMost(GWN_PRIM_LINES, 2);
+
+		float frompos[3];
+		line.m_from.getValue(frompos);
+		mul_m4_v3(persmat, frompos);
+		immVertex3fv(pos, frompos);
+		float topos[3];
+		line.m_to.getValue(topos);
+		mul_m4_v3(persmat, topos);
+		immVertex3fv(pos, topos);
+
+		immEnd();
+	}
+	immUnbindProgram();
+
 	m_lines.clear();
 }
 /* End of EEVEE INTEGRATION */

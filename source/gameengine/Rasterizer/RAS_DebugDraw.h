@@ -45,7 +45,7 @@ class RAS_DebugDraw
 {
 	friend RAS_OpenGLDebugDraw;
 
-public:
+private:
 	struct Shape
 	{
 		Shape(const MT_Vector4& color);
@@ -147,7 +147,7 @@ public:
 
 	/* EEVEE INTEGRATION */
 	/* I want to split debug drawing in several functions for now (Replace Flush) */
-	void ClearDebugLines();
+	void DrawDebugLines();
 	/* End of EEVEE INTEGRATION */
 };
 

@@ -960,43 +960,13 @@ void KX_Scene::RenderFonts()
 }
 /***********************End of DYNAMIC FONTS********************************/
 
-/****************************DEBUG******************************************/
+/**********************DEBUG (RAS_DebugDraw)********************************/
 void KX_Scene::RenderDebugLines()
 {
 	KX_KetsjiEngine *engine = KX_GetActiveEngine();
-	KX_Camera *cam = GetActiveCamera();
 	RAS_Rasterizer *rasty = engine->GetRasterizer();
 	RAS_DebugDraw *debugDraw = &rasty->GetDebugDraw(this);
-	float persmat[4][4];
-	DRW_viewport_matrix_get(persmat, DRW_MAT_PERS);
-
-	// draw lines
-	Gwn_VertFormat *format = immVertexFormat();
-	unsigned int pos = GWN_vertformat_attr_add(format, "pos", GWN_COMP_F32, 3, GWN_FETCH_FLOAT);
-
-	immBindBuiltinProgram(GPU_SHADER_3D_UNIFORM_COLOR);
-
-	for (const RAS_DebugDraw::Line& line : debugDraw->m_lines) {
-		float col[4];
-		line.m_color.getValue(col);
-		immUniformColor4fv(col);
-
-		immBeginAtMost(GWN_PRIM_LINES, 2);
-
-		float frompos[3];
-		line.m_from.getValue(frompos);
-		mul_m4_v3(persmat, frompos);
-		immVertex3fv(pos, frompos);
-		float topos[3];
-		line.m_to.getValue(topos);
-		mul_m4_v3(persmat, topos);
-		immVertex3fv(pos, topos);
-
-		immEnd();
-	}
-	immUnbindProgram();
-
-	debugDraw->ClearDebugLines();
+	debugDraw->DrawDebugLines();
 }
 /***************************End of DEBUG************************************/
 
