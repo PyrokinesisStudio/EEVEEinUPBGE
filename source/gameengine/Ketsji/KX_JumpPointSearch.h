@@ -61,10 +61,10 @@ public:
 	void InitGrid();
 	Node *GetNodeAt(int x, int y);
 	float Distance(Node *n1, Node *n2);
-	JPath *ExpandPath(JPath *inputPath);
-	JPath *Interpolate(float x0, float y0, float x1, float y1);
+	JPath ExpandPath(JPath *inputPath);
+	JPath Interpolate(float x0, float y0, float x1, float y1);
 	JPath BackTrace(Node *node);
-	JPath *FindPath(Node *startNode, Node *endNode);
+	JPath FindPath(Node *startNode, Node *endNode);
 	std::vector<Node *>SortByFcost(std::vector<Node *>inputNodes);
 	void IdentifySuccessors(Node *node, Node *endNode, std::vector<Node *>openList);
 	std::pair<int, int>Jump(int x, int y, int px, int py, Node *endNode);

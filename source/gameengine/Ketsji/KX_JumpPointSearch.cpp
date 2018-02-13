@@ -30,6 +30,14 @@
 #include <math.h>
 
 KX_JumpPointSearch::Node::Node()
+	:m_x(0),
+	m_y(0),
+	m_fCost(0),
+	m_gCost(0),
+	m_parent(nullptr),
+	m_opened(false),
+	m_closed(false),
+	m_isWalkable(true)
 {
 }
 
@@ -52,6 +60,7 @@ KX_JumpPointSearch::Node::~Node()
 KX_JumpPointSearch::KX_JumpPointSearch()
 {
 	InitGrid();
+	m_openList = {};
 }
 
 KX_JumpPointSearch::~KX_JumpPointSearch()
@@ -85,9 +94,9 @@ float KX_JumpPointSearch::Distance(Node *node1, Node *node2)
 	return (fabs(a) + fabs(b));
 }
 
-JPath *KX_JumpPointSearch::ExpandPath(JPath *path)
+JPath KX_JumpPointSearch::ExpandPath(JPath *path)
 {
-	JPath *expanded = {};
+	JPath expanded = {};
 	int l = path->size();
 
 	if (l < 2) {
@@ -98,20 +107,20 @@ JPath *KX_JumpPointSearch::ExpandPath(JPath *path)
 		std::pair<float, float> coord0 = path->at(i);
 		std::pair<float, float> coord1 = path->at(i + 1);
 
-		JPath *interpolated = Interpolate(coord0.first, coord0.second, coord1.first, coord1.second);
-		int interpolatedLen = interpolated->size();
+		JPath interpolated = Interpolate(coord0.first, coord0.second, coord1.first, coord1.second);
+		int interpolatedLen = interpolated.size();
 		for (int j = 0; j < interpolatedLen - 1; j++) {
-			expanded->push_back(interpolated->at(j));
+			expanded.push_back(interpolated.at(j));
 		}
 	}
-	expanded->push_back(path->at(l - 1));
+	expanded.push_back(path->at(l - 1));
 
 	return expanded;
 }
 
-JPath *KX_JumpPointSearch::Interpolate(float x0, float y0, float x1, float y1)
+JPath KX_JumpPointSearch::Interpolate(float x0, float y0, float x1, float y1)
 {
-	JPath *line = {};
+	JPath line = {};
 
 	float dx = fabs(x1 - x0);
 	float dy = fabs(y1 - y0);
@@ -134,7 +143,7 @@ JPath *KX_JumpPointSearch::Interpolate(float x0, float y0, float x1, float y1)
 	float err = dx - dy;
 
 	while (1) {
-		line->push_back({ x0, y0 });
+		line.push_back({ x0, y0 });
 
 		if (x0 == x1 && y0 == y1) {
 			break;
@@ -177,9 +186,9 @@ std::vector<KX_JumpPointSearch::Node *>KX_JumpPointSearch::SortByFcost(std::vect
 	return inputNodes;
 }
 
-JPath *KX_JumpPointSearch::FindPath(Node *startNode, Node *endNode)
+JPath KX_JumpPointSearch::FindPath(Node *startNode, Node *endNode)
 {
-	m_openList.clear();
+	m_openList = {};
 
 	startNode->m_gCost = 0;
 	startNode->m_fCost = 0;
@@ -188,17 +197,17 @@ JPath *KX_JumpPointSearch::FindPath(Node *startNode, Node *endNode)
 	m_openList.push_back(startNode);
 	startNode->m_opened = true;
 
-	while (m_openList.size()) {
+	while (m_openList.size() > 0) {
 		m_openList = SortByFcost(m_openList);
 
-		Node *node = m_openList[-1];
+		Node *node = m_openList.back();
 		m_openList.pop_back();
 
 		m_nodesToClean.push_back(node);
 		node->m_closed = true;
 
 		if (node == endNode) {
-			JPath *exp = ExpandPath(&BackTrace(endNode));
+			JPath exp = ExpandPath(&BackTrace(endNode));
 			return exp;
 		}
 		IdentifySuccessors(node, endNode, m_openList);
@@ -220,12 +229,12 @@ int KX_JumpPointSearch::GetPathForPython(MT_Vector3& fromPoint, MT_Vector3& toPo
 	Node *from = GetNodeAt(int(fx), int(fy));
 	Node *to = GetNodeAt(int(tx), int(ty));
 
-	JPath *p = FindPath(from, to);
+	JPath p = FindPath(from, to);
 
 	int pathLen = 0;
-	for (int i = 0; i < p->size(); i++) {
-		path[i] = p->at(i).first;
-		path[i + 1] = p->at(i).second;
+	for (int i = 0; i < p.size(); i++) {
+		path[i] = p.at(i).first;
+		path[i + 1] = p.at(i).second;
 		path[i + 2] = toPoint.z();
 		pathLen++;
 	}
