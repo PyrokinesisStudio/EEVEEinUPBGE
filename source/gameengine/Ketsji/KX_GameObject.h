@@ -76,6 +76,8 @@ typedef struct BGEShCaster {
 class RAS_BoundingBox;
 /* End of EEVEE INTEGRATION */
 
+class KX_JumpPointSearch;
+
 #ifdef WITH_PYTHON
 /* utility conversion function */
 bool ConvertPythonToGameObject(SCA_LogicManager *logicmgr, PyObject *value, KX_GameObject **object, bool py_none_ok, const char *error_prefix);
@@ -235,6 +237,10 @@ public:
 	void SetObjectColor(const MT_Vector4& color);
 	const MT_Vector4& GetObjectColor();
 	/****************************End of EEVEE INTEGRATION *****************/
+
+
+	KX_JumpPointSearch *m_pathFinder;
+
 
 	/***********************DEFORMER****************************/
 	virtual class RAS_Deformer* GetDeformer()
@@ -646,6 +652,10 @@ public:
 	KX_PYMETHOD_DOC(KX_GameObject, getActionName);
 	KX_PYMETHOD_DOC(KX_GameObject, setActionFrame);
 	KX_PYMETHOD_DOC(KX_GameObject, isPlayingAction);
+
+
+
+	KX_PYMETHOD_DOC(KX_GameObject, findPath);
 	
 	/* Dict access */
 	KX_PYMETHOD_VARARGS(KX_GameObject, get);

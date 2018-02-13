@@ -107,6 +107,8 @@ extern "C" {
 #include "RAS_BoundingBox.h"
 /* End of EEVEE INTEGRATION */
 
+#include "KX_JumpPointSearch.h"
+
 static MT_Vector3 dummy_point= MT_Vector3(0.0f, 0.0f, 0.0f);
 static MT_Vector3 dummy_scaling = MT_Vector3(1.0f, 1.0f, 1.0f);
 static MT_Matrix3x3 dummy_orientation = MT_Matrix3x3(1.0f, 0.0f, 0.0f,
@@ -139,6 +141,10 @@ KX_GameObject::KX_GameObject(
 	  m_castShadows(true), // eevee integration
 	  m_updateShadows(true), // eevee integration
 	  m_forceShadowUpdate(false), // eevee integration
+
+
+
+	  m_pathFinder(nullptr),
 
 	  m_rasMeshObject(nullptr),
       m_actionManager(nullptr)
@@ -245,6 +251,10 @@ KX_GameObject::~KX_GameObject()
 
 	if (m_boundingBox) {
 		m_boundingBox->RemoveUser();
+	}
+
+	if (m_pathFinder) {
+		delete m_pathFinder;
 	}
 }
 
@@ -2248,6 +2258,10 @@ PyMethodDef KX_GameObject::Methods[] = {
 	KX_PYMETHODTABLE(KX_GameObject, getActionName),
 	KX_PYMETHODTABLE(KX_GameObject, setActionFrame),
 	KX_PYMETHODTABLE(KX_GameObject, isPlayingAction),
+
+
+
+	KX_PYMETHODTABLE(KX_GameObject, findPath),
 	
 	// dict style access for props
 	{"get",(PyCFunction) KX_GameObject::sPyget, METH_VARARGS},
@@ -4417,6 +4431,38 @@ KX_PYMETHODDEF_DOC(KX_GameObject, isPlayingAction,
 	layer_check(layer, "isPlayingAction");
 
 	return PyBool_FromLong(!IsActionDone(layer));
+}
+
+KX_PYMETHODDEF_DOC(KX_GameObject, findPath, "")
+{
+	MT_Vector3 toPoint;
+	PyObject *pyto;
+
+	if (!PyArg_ParseTuple(args, "O", &pyto)) {
+		return nullptr; // python sets simple error
+	}
+
+	if (!PyVecTo(pyto, toPoint)) {
+		return nullptr;
+	}
+
+	if (!m_pathFinder) {
+		m_pathFinder = new KX_JumpPointSearch();
+	}
+
+	MT_Vector3 currentPos(NodeGetWorldPosition());
+
+	float path[256 * 3];
+	int pathLen = m_pathFinder->GetPathForPython(currentPos, toPoint, path);
+	PyObject *pathList = PyList_New(pathLen);
+	for (int i = 0; i< pathLen; i++)
+	{
+		MT_Vector3 point(&path[3 * i]);
+		PyList_SET_ITEM(pathList, i, PyObjectFrom(point));
+	}
+
+
+	return pathList;
 }
 
 
