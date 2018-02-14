@@ -776,6 +776,10 @@ void KX_GameObject::SetVisible(bool v, bool recursive)
 	else if (!v && m_bVisible) {
 		RemoveShadowShadingGroups();
 	}
+
+	/* To avoid ghost effect when we switch of visibility state */
+	GetScene()->ResetTaaSamples();
+
 	m_bVisible = v;
 	if (m_pGraphicController)
 		m_pGraphicController->Activate(m_bVisible);

@@ -64,7 +64,7 @@ KX_VisibilityActuator::GetReplica(
 	void
 	)
 {
-	KX_VisibilityActuator* replica = new KX_VisibilityActuator(*this);
+	KX_VisibilityActuator *replica = new KX_VisibilityActuator(*this);
 	replica->ProcessReplica();
 	return replica;
 }
@@ -77,10 +77,7 @@ KX_VisibilityActuator::Update()
 	RemoveAllEvents();
 	if (bNegativeEvent) return false;
 
-	KX_GameObject *obj = (KX_GameObject*) GetParent();
-
-	/* To avoid ghost effect when we switch of visibility state */
-	obj->GetScene()->ResetTaaSamples();
+	KX_GameObject *obj = (KX_GameObject *)GetParent();
 
 	obj->SetVisible(m_visible, m_recursive);
 	obj->SetOccluder(m_occlusion, m_recursive);
