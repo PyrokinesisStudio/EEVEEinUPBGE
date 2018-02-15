@@ -99,15 +99,15 @@
 
 /* ******************** general functions ***************** */
 
-static bool use_depth_doit(Scene *scene, View3D *v3d)
+static bool use_depth_doit(View3D *v3d, Object *obedit)
 {
 	if (v3d->drawtype > OB_WIRE)
 		return true;
 
 	/* special case (depth for wire color) */
 	if (v3d->drawtype <= OB_WIRE) {
-		if (scene->obedit && scene->obedit->type == OB_MESH) {
-			Mesh *me = scene->obedit->data;
+		if (obedit && obedit->type == OB_MESH) {
+			Mesh *me = obedit->data;
 			if (me->drawflag & ME_DRAWEIGHT) {
 				return true;
 			}
@@ -268,28 +268,28 @@ static void view3d_stereo3d_setup(
 		data = (Camera *)v3d->camera->data;
 		shiftx = data->shiftx;
 
-		BLI_lock_thread(LOCK_VIEW3D);
+		BLI_thread_lock(LOCK_VIEW3D);
 		data->shiftx = BKE_camera_multiview_shift_x(&scene->r, v3d->camera, viewname);
 
 		BKE_camera_multiview_view_matrix(&scene->r, v3d->camera, is_left, viewmat);
 		view3d_main_region_setup_view(eval_ctx, scene, v3d, ar, viewmat, NULL, rect);
 
 		data->shiftx = shiftx;
-		BLI_unlock_thread(LOCK_VIEW3D);
+		BLI_thread_unlock(LOCK_VIEW3D);
 	}
 	else { /* SCE_VIEWS_FORMAT_MULTIVIEW */
 		float viewmat[4][4];
 		Object *view_ob = v3d->camera;
 		Object *camera = BKE_camera_multiview_render(scene, v3d->camera, viewname);
 
-		BLI_lock_thread(LOCK_VIEW3D);
+		BLI_thread_lock(LOCK_VIEW3D);
 		v3d->camera = camera;
 
 		BKE_camera_multiview_view_matrix(&scene->r, camera, false, viewmat);
 		view3d_main_region_setup_view(eval_ctx, scene, v3d, ar, viewmat, NULL, rect);
 
 		v3d->camera = view_ob;
-		BLI_unlock_thread(LOCK_VIEW3D);
+		BLI_thread_unlock(LOCK_VIEW3D);
 	}
 }
 
@@ -494,7 +494,7 @@ static void drawviewborder(Scene *scene, const Depsgraph *depsgraph, ARegion *ar
 			float alpha = 1.0f;
 
 			if (ca->passepartalpha != 1.0f) {
-				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 				glEnable(GL_BLEND);
 				alpha = ca->passepartalpha;
 			}
@@ -1455,7 +1455,7 @@ static void draw_view_axis(RegionView3D *rv3d, const rcti *rect)
 	glLineWidth(2.0f);
 	glEnable(GL_LINE_SMOOTH);
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
 	Gwn_VertFormat *format = immVertexFormat();
 	unsigned int pos = GWN_vertformat_attr_add(format, "pos", GWN_COMP_F32, 2, GWN_FETCH_FLOAT);
@@ -1498,7 +1498,7 @@ static void UNUSED_FUNCTION(draw_rotation_guide)(RegionView3D *rv3d)
 	negate_v3_v3(o, rv3d->ofs);
 
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	glDepthMask(GL_FALSE);  /* don't overwrite zbuf */
 
 	Gwn_VertFormat *format = immVertexFormat();
@@ -1918,6 +1918,10 @@ void view3d_main_region_draw(const bContext *C, ARegion *ar)
 	view3d_draw_view(C, ar);
 	GPU_viewport_unbind(rv3d->viewport);
 
+	rcti rect = ar->winrct;
+	BLI_rcti_translate(&rect, -ar->winrct.xmin, -ar->winrct.ymin);
+	GPU_viewport_draw_to_screen(rv3d->viewport, &rect);
+
 	v3d->flag |= V3D_INVALID_BACKBUF;
 }
 
@@ -2130,7 +2134,7 @@ ImBuf *ED_view3d_draw_offscreen_imbuf(
 
 	if (own_ofs) {
 		/* bind */
-		ofs = GPU_offscreen_create(sizex, sizey, use_full_sample ? 0 : samples, false, err_out);
+		ofs = GPU_offscreen_create(sizex, sizey, use_full_sample ? 0 : samples, true, false, err_out);
 		if (ofs == NULL) {
 			return NULL;
 		}
@@ -2406,9 +2410,9 @@ void VP_legacy_view3d_stereo3d_setup(const EvaluationContext *eval_ctx, Scene *s
 	view3d_stereo3d_setup(eval_ctx, scene, v3d, ar, NULL);
 }
 
-bool VP_legacy_use_depth(Scene *scene, View3D *v3d)
+bool VP_legacy_use_depth(View3D *v3d, Object *obedit)
 {
-	return use_depth_doit(scene, v3d);
+	return use_depth_doit(v3d, obedit);
 }
 
 void VP_drawviewborder(Scene *scene, const struct Depsgraph *depsgraph, ARegion *ar, View3D *v3d)

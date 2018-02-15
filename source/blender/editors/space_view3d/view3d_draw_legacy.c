@@ -202,7 +202,7 @@ static void draw_view_icon(RegionView3D *rv3d, rcti *rect)
 	else return;
 	
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA,  GL_ONE_MINUS_SRC_ALPHA); 
+	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA); 
 	
 	UI_icon_draw(5.0 + rect->xmin, 5.0 + rect->ymin, icon);
 	
@@ -213,11 +213,10 @@ static void draw_view_icon(RegionView3D *rv3d, rcti *rect)
 
 static void backdrawview3d(
         const struct EvaluationContext *eval_ctx, Scene *scene, ViewLayer *view_layer,
-        wmWindow *win, ARegion *ar, View3D *v3d)
+        ARegion *ar, View3D *v3d)
 {
 	RegionView3D *rv3d = ar->regiondata;
 	struct Base *base = view_layer->basact;
-	int multisample_enabled;
 
 	BLI_assert(ar->regiontype == RGN_TYPE_WINDOW);
 
@@ -237,7 +236,7 @@ static void backdrawview3d(
 	{
 		/* do nothing */
 	}
-	else if (scene->obedit &&
+	else if ((eval_ctx->object_mode & OB_MODE_EDIT) &&
 	         V3D_IS_ZBUF(v3d))
 	{
 		/* do nothing */
@@ -264,14 +263,13 @@ static void backdrawview3d(
 	/* dithering and AA break color coding, so disable */
 	glDisable(GL_DITHER);
 
-	multisample_enabled = glIsEnabled(GL_MULTISAMPLE);
-	if (multisample_enabled)
-		glDisable(GL_MULTISAMPLE);
-
-	if (win->multisamples != USER_MULTISAMPLE_NONE) {
+	if (false) {
 		/* for multisample we use an offscreen FBO. multisample drawing can fail
 		 * with color coded selection drawing, and reading back depths from such
-		 * a buffer can also cause a few seconds freeze on OS X / NVidia. */
+		 * a buffer can also cause a few seconds freeze on OS X / NVidia.
+		 *
+		 * NOTE: code is no longer used now, but offscreen drawing is likely
+		 * what we will always want to do for the new viewport. */
 		int w = BLI_rcti_size_x(&ar->winrct);
 		int h = BLI_rcti_size_y(&ar->winrct);
 		char error[256];
@@ -286,7 +284,7 @@ static void backdrawview3d(
 		}
 
 		if (!rv3d->gpuoffscreen) {
-			rv3d->gpuoffscreen = GPU_offscreen_create(w, h, 0, false, error);
+			rv3d->gpuoffscreen = GPU_offscreen_create(w, h, 0, true, false, error);
 
 			if (!rv3d->gpuoffscreen)
 				fprintf(stderr, "Failed to create offscreen selection buffer for multisample: %s\n", error);
@@ -327,8 +325,6 @@ static void backdrawview3d(
 	v3d->zbuf = false;
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_DITHER);
-	if (multisample_enabled)
-		glEnable(GL_MULTISAMPLE);
 
 	if (rv3d->rflag & RV3D_CLIPPING)
 		ED_view3d_clipping_disable();
@@ -358,7 +354,7 @@ static void view3d_opengl_read_Z_pixels(ARegion *ar, int x, int y, int w, int h,
 void ED_view3d_backbuf_validate(const struct EvaluationContext *eval_ctx, ViewContext *vc)
 {
 	if (vc->v3d->flag & V3D_INVALID_BACKBUF) {
-		backdrawview3d(eval_ctx, vc->scene, vc->view_layer, vc->win, vc->ar, vc->v3d);
+		backdrawview3d(eval_ctx, vc->scene, vc->view_layer, vc->ar, vc->v3d);
 	}
 }
 
@@ -736,7 +732,7 @@ static void view3d_draw_bgpic(Scene *scene, const Depsgraph *depsgraph,
 			glDepthMask(GL_FALSE);
 
 			glEnable(GL_BLEND);
-			glBlendFunc(GL_SRC_ALPHA,  GL_ONE_MINUS_SRC_ALPHA);
+			glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
 			gpuPushProjectionMatrix();
 			gpuPushMatrix();
@@ -1304,7 +1300,7 @@ void ED_view3d_draw_select_loop(
 		for (base = view_layer->object_bases.first; base; base = base->next) {
 			if ((base->flag & BASE_VISIBLED) != 0) {
 				if (((base->flag & BASE_SELECTABLED) == 0) ||
-				    (use_obedit_skip && (scene->obedit->data == base->object->data)))
+				    (use_obedit_skip && (vc->obedit->data == base->object->data)))
 				{
 					base->object->select_color = 0;
 				}
@@ -1508,6 +1504,7 @@ static void view3d_draw_objects(
 	Depsgraph *depsgraph = CTX_data_depsgraph(C);
 	RegionView3D *rv3d = ar->regiondata;
 	Base *base;
+	Object *obedit = OBEDIT_FROM_EVAL_CTX(eval_ctx);
 	const bool do_camera_frame = !draw_offscreen;
 	const bool draw_grids = !draw_offscreen && (v3d->flag2 & V3D_RENDER_OVERRIDE) == 0;
 	const bool draw_floor = (rv3d->view == RV3D_VIEW_USER) || (rv3d->persp != RV3D_ORTHO);
@@ -1524,7 +1521,7 @@ static void view3d_draw_objects(
 		view3d_draw_clipping(rv3d);
 
 	/* set zbuffer after we draw clipping region */
-	v3d->zbuf = VP_legacy_use_depth(scene, v3d);
+	v3d->zbuf = VP_legacy_use_depth(v3d, obedit);
 
 	if (v3d->zbuf) {
 		glEnable(GL_DEPTH_TEST);
@@ -1601,7 +1598,7 @@ static void view3d_draw_objects(
 					draw_dupli_objects(eval_ctx, scene, view_layer, ar, v3d, base);
 				}
 				if ((base->flag & BASE_SELECTED) == 0) {
-					if (base->object != scene->obedit)
+					if (base->object != obedit)
 						draw_object(eval_ctx, scene, view_layer, ar, v3d, base, 0);
 				}
 			}
@@ -1613,7 +1610,7 @@ static void view3d_draw_objects(
 		/* draw selected and editmode */
 		for (base = view_layer->object_bases.first; base; base = base->next) {
 			if ((base->flag & BASE_VISIBLED) != 0) {
-				if (base->object == scene->obedit || (base->flag & BASE_SELECTED)) {
+				if (base->object == obedit || (base->flag & BASE_SELECTED)) {
 					draw_object(eval_ctx, scene, view_layer, ar, v3d, base, 0);
 				}
 			}
@@ -2006,22 +2003,12 @@ static void view3d_main_region_draw_objects(
 		do_compositing = GPU_fx_compositor_initialize_passes(rv3d->compositor, &ar->winrct, &ar->drawrct, &fx_settings);
 	}
 	
-	/* enables anti-aliasing for 3D view drawing */
-	if (win->multisamples != USER_MULTISAMPLE_NONE) {
-		glEnable(GL_MULTISAMPLE);
-	}
-
 	/* main drawing call */
 	view3d_draw_objects(C, &eval_ctx, scene, v3d, ar, grid_unit, true, false, do_compositing ? rv3d->compositor : NULL);
 
 	/* post process */
 	if (do_compositing) {
 		GPU_fx_do_composite_pass(rv3d->compositor, rv3d->winmat, rv3d->is_persp, scene, NULL);
-	}
-
-	/* Disable back anti-aliasing */
-	if (win->multisamples != USER_MULTISAMPLE_NONE) {
-		glDisable(GL_MULTISAMPLE);
 	}
 
 	if (v3d->lay_used != lay_used) { /* happens when loading old files or loading with UI load */

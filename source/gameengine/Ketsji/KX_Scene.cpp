@@ -349,9 +349,9 @@ void KX_Scene::InitEeveeData()
 	RAS_ICanvas *canvas = engine->GetCanvas();
 	Scene *scene = GetBlenderScene();
 	ViewLayer *cur_view_layer = BKE_view_layer_from_scene_get(scene);
-	Object *maincam = BKE_view_layer_camera_find(cur_view_layer); // TODO: Find a way to always have a valid camera
+	Object *maincam = BKE_view_layer_camera_find(cur_view_layer);
 
-	GPUOffScreen *tempGpuOffScreen = GPU_offscreen_create(canvas->GetWidth(), canvas->GetHeight(), 0, false, nullptr); // TODO: Find a way to free that properly
+	GPUOffScreen *tempGpuOffScreen = GPU_offscreen_create(canvas->GetWidth(), canvas->GetHeight(), 0, true, false, nullptr);
 	DRW_game_render_loop_begin(tempGpuOffScreen, bmain, scene, maincam);
 }
 
