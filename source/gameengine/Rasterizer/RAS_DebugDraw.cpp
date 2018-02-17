@@ -184,14 +184,13 @@ void RAS_DebugDraw::DrawDebugLines()
 		immUniformColor4fv(col);
 
 		immBeginAtMost(GWN_PRIM_LINES, 2);
-
 		float frompos[3];
 		line.m_from.getValue(frompos);
-		mul_m4_v3(persmat, frompos);
+		mul_project_m4_v3(persmat, frompos);
 		immVertex3fv(pos, frompos);
 		float topos[3];
 		line.m_to.getValue(topos);
-		mul_m4_v3(persmat, topos);
+		mul_project_m4_v3(persmat, topos);
 		immVertex3fv(pos, topos);
 
 		immEnd();
